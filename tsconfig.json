@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noEmitOnError": true,
+    "lib": ["es2018", "dom"],
+    "strict": true,
+    "esModuleInterop": false,
+    "outDir": "build",
+    "rootDir": "./",
+    "baseUrl": "./",
+    "declaration": true,
+    "declarationDir": "build/dts",
+    "skipLibCheck": true,
+    "allowJs": true
+  },
+  "include": ["./src/**/*.ts"]
+}
