@@ -12,3 +12,4 @@ export * from './customer/index.js';
 export * from './media/index.js';
 export * from './products/index.js';
 export * from './store/index.js';
+export * from './websockets/index.js';

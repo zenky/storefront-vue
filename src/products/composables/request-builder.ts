@@ -1,4 +1,11 @@
-import { ProductsFilters, ProductsLoader, ProductsPriceFilters, ProductsSorting, ProductsSource } from '../types.js';
+import {
+  ProductsFilters,
+  ProductsLoader,
+  ProductsPriceFilters,
+  ProductsSorting,
+  ProductsSource,
+  ProductsSourceType,
+} from '../types.js';
 import { ProductsPaginationRequest } from '@zenky/api';
 
 function getSourceParams(source: ProductsSource | null): object {
@@ -7,10 +14,30 @@ function getSourceParams(source: ProductsSource | null): object {
   }
 
   switch (source.type) {
-    case 'category':
+    case ProductsSourceType.Category:
       return { category_id: source.id };
-    case 'collection':
+    case ProductsSourceType.Collection:
       return { collection_id: source.id };
+    case ProductsSourceType.CategoryContext:
+      return {
+        context_type: 'category',
+        context_id: source.id,
+      };
+    case ProductsSourceType.GroupContext:
+      return {
+        context_type: 'group',
+        context_id: source.id,
+      };
+    case ProductsSourceType.VariantOptionContext:
+      return {
+        context_type: 'variant_option',
+        context_id: source.id,
+      };
+    case ProductsSourceType.VariantOptionValueContext:
+      return {
+        context_type: 'variant_option_value',
+        context_id: source.id,
+      };
     default:
       return {};
   }
@@ -89,6 +116,10 @@ function getLoaderParams(page: number, loader: ProductsLoader): object {
 
   if (loader.search) {
     params.search = loader.search;
+  }
+
+  if (typeof loader.promotionReward === 'string' && loader.promotionReward) {
+    params.promotion_reward = loader.promotionReward;
   }
 
   return params;

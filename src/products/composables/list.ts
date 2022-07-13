@@ -64,6 +64,7 @@ export function useProductsList(config: ComputedRef<ProductsListConfig>, errorHa
       count: config.value.count,
     },
     with: config.value.with || '',
+    promotionReward: config.value.promotionReward || null,
   }));
 
   const load = async (page: number, reset: boolean = false, callback?: ProductsRequestCallback) => {

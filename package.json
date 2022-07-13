@@ -1,6 +1,6 @@
 {
   "name": "@zenky/storefront-vue",
-  "version": "0.9.32",
+  "version": "0.9.33",
   "description": "Zenky Storefront library for Vue 3.",
   "author": "Timur Zurbaev <hello@zurbaev.ru>",
   "license": "MIT",
@@ -20,10 +20,11 @@
   ],
   "peerDependencies": {
     "@zenky/api": "^0.9.37",
-    "@zenky/events": "^1.0.0",
+    "@zenky/events": "^1.0.2",
     "@zenky/ui": "^0.9.63",
     "lodash-es": "^4.17.21",
     "pinia": "^2.0.14",
+    "pusher-js": "^7.1.1-beta",
     "vue": "^3.2.36"
   },
   "devDependencies": {

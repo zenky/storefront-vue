@@ -19,6 +19,7 @@ export default [
       '@zenky/ui',
       'lodash-es',
       'pinia',
+      'pusher-js',
       'vue',
     ],
   },

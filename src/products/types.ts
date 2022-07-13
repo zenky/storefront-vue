@@ -12,6 +12,10 @@ import { Ref } from 'vue';
 export enum ProductsSourceType {
   Category = 'category',
   Collection = 'collection',
+  CategoryContext = 'category_context',
+  GroupContext = 'group_context',
+  VariantOptionContext = 'variant_option_context',
+  VariantOptionValueContext = 'variant_option_value_context',
 }
 
 export enum ProductsSorting {
@@ -53,6 +57,7 @@ export interface ProductsLoader {
     count: number;
   };
   with?: string;
+  promotionReward?: string | null;
 }
 
 export type ProductsRequestCallback = (request: ProductsPaginationRequest | null) => void;
@@ -86,4 +91,5 @@ export interface ProductsListConfig {
   count: number;
   filtersType: ProductsFiltersType | null;
   with?: string;
+  promotionReward?: string;
 }
