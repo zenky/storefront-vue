@@ -7,7 +7,7 @@ import {
   ProductsFiltersType,
   ProductsListConfig,
   ProductsListProvider,
-  ProductsLoader,
+  ProductsLoader, ProductsPromotion,
   ProductsRequestCallback,
   ProductsSorting,
   ProductsSource,
@@ -64,7 +64,7 @@ export function useProductsList(config: ComputedRef<ProductsListConfig>, errorHa
       count: config.value.count,
     },
     with: config.value.with || '',
-    promotionReward: config.value.promotionReward || null,
+    promotion: config.value.promotion || null,
   }));
 
   const load = async (page: number, reset: boolean = false, callback?: ProductsRequestCallback) => {
@@ -146,9 +146,31 @@ function getFiltersFromUrl(param: string): ProductsFilters | null {
   return filters;
 }
 
+function getProductsListQueryParamsWithPromotion(params: object, promotion: ProductsPromotion | null | undefined): object {
+  if (!promotion) {
+    return params;
+  }
+
+  const clone: any = {
+    ...params,
+    promotion_id: promotion.id,
+    reward_id: promotion.reward_id,
+  };
+
+  if (promotion.context_type) {
+    clone.context_type = promotion.context_type;
+  }
+
+  if (promotion.context_id) {
+    clone.context_id = promotion.context_id;
+  }
+
+  return clone;
+}
+
 export function getProductsListQueryParams(config: ProductsListConfig, request: ProductsPaginationRequest | null): object {
   if (request === null) {
-    return {};
+    return getProductsListQueryParamsWithPromotion({}, config.promotion);
   }
 
   const query: any = {};
@@ -173,7 +195,30 @@ export function getProductsListQueryParams(config: ProductsListConfig, request: 
     query.search = request.search;
   }
 
-  return query;
+  return getProductsListQueryParamsWithPromotion(query, config.promotion);
+}
+
+function getQueryParam(query: any, param: string): any {
+  return typeof query[param] !== 'undefined' && query[param] ? query[param] : null;
+}
+
+function getPromotionFromQuery(query: any): ProductsPromotion | null {
+  const promotionId = getQueryParam(query, 'promotion_id');
+  const rewardId = getQueryParam(query, 'reward_id');
+
+  if (!promotionId || !rewardId) {
+    return null;
+  }
+
+  const contextType = getQueryParam(query, 'context_type');
+  const contextId = getQueryParam(query, 'context_id');
+
+  return {
+    id: promotionId,
+    reward_id: rewardId,
+    context_type: contextType,
+    context_id: contextId,
+  };
 }
 
 export function getProductsListParamsFromQuery(query: any | null | undefined): object | null {
@@ -184,8 +229,9 @@ export function getProductsListParamsFromQuery(query: any | null | undefined): o
   return {
     sorting: typeof query.order_by !== 'undefined' ? query.order_by : null,
     f: typeof query.f === 'string' ? getFiltersFromUrl(query.f) : null,
-    min_price: typeof query.min_price !== 'undefined' && query.min_price ? query.min_price : null,
-    max_price: typeof query.max_price !== 'undefined' && query.max_price ? query.max_price : null,
-    search: typeof query.search !== 'undefined' && query.search ? query.search : null,
+    min_price: getQueryParam(query, 'min_price'),
+    max_price: getQueryParam(query, 'max_price'),
+    search: getQueryParam(query, 'search'),
+    promotion: getPromotionFromQuery(query),
   };
 }

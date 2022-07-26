@@ -1,15 +1,17 @@
 import {
   ProductsFilters,
   ProductsLoader,
-  ProductsPriceFilters,
+  ProductsPriceFilters, ProductsPromotion,
   ProductsSorting,
   ProductsSource,
   ProductsSourceType,
 } from '../types.js';
 import { ProductsPaginationRequest } from '@zenky/api';
 
-function getSourceParams(source: ProductsSource | null): object {
+function getSourceParams(source: ProductsSource | null, promotion: ProductsPromotion | null | undefined): object {
   if (source === null || !source.id || !source.type) {
+    return {};
+  } else if (promotion !== null) {
     return {};
   }
 
@@ -118,9 +120,18 @@ function getLoaderParams(page: number, loader: ProductsLoader): object {
     params.search = loader.search;
   }
 
-  if (typeof loader.promotionReward === 'string' && loader.promotionReward) {
-    params.promotion_reward = loader.promotionReward;
+  if (typeof loader.promotion === 'undefined' || loader.promotion === null) {
+    return params;
   }
+
+  params.promotion_reward = 'all';
+
+  if (!loader.promotion.context_type || !loader.promotion.context_id) {
+    return params;
+  }
+
+  params.context_type = loader.promotion.context_type;
+  params.context_id = loader.promotion.context_id;
 
   return params;
 }
@@ -131,7 +142,7 @@ export function getProductsPaginationRequest(page: number, loader: ProductsLoade
   }
 
   return {
-    ...getSourceParams(loader.source),
+    ...getSourceParams(loader.source, loader.promotion),
     ...getSortingParams(loader.sorting),
     ...getFiltersParams(loader.filters),
     ...getPricesFiltersParams(loader.pricesFilters),

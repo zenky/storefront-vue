@@ -57,7 +57,7 @@ export interface ProductsLoader {
     count: number;
   };
   with?: string;
-  promotionReward?: string | null;
+  promotion?: ProductsPromotion | null;
 }
 
 export type ProductsRequestCallback = (request: ProductsPaginationRequest | null) => void;
@@ -82,6 +82,13 @@ export enum ProductsFiltersType {
   FeaturesGroups = 'featuresGroups',
 }
 
+export interface ProductsPromotion {
+  id: string;
+  reward_id: string;
+  context_type: string | null;
+  context_id: string | null;
+}
+
 export interface ProductsListConfig {
   source: ProductsSource | null;
   search?: string | null;
@@ -91,5 +98,5 @@ export interface ProductsListConfig {
   count: number;
   filtersType: ProductsFiltersType | null;
   with?: string;
-  promotionReward?: string;
+  promotion?: ProductsPromotion | null;
 }
