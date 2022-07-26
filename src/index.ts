@@ -10,6 +10,7 @@ export * from './catalog/features/index.js';
 export * from './content/index.js';
 export * from './customer/index.js';
 export * from './media/index.js';
+export * from './offers/index.js';
 export * from './products/index.js';
 export * from './store/index.js';
 export * from './websockets/index.js';

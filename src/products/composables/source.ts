@@ -42,6 +42,14 @@ export function getProductsSource(source: ProductsSource | null): ProductsSource
       return getInjectedSource(ZenkyInjection.Category, ZenkyInjection.CategoryNotFound, injected);
     case ProductsSourceType.Collection:
       return getInjectedSource(ZenkyInjection.Collection, ZenkyInjection.CollectionNotFound, injected);
+    case ProductsSourceType.CategoryContext:
+      return getInjectedSource(ZenkyInjection.CategoryContext, ZenkyInjection.CategoryContextNotFound, injected);
+    case ProductsSourceType.GroupContext:
+      return getInjectedSource(ZenkyInjection.GroupContext, ZenkyInjection.GroupContextNotFound, injected);
+    case ProductsSourceType.VariantOptionContext:
+      return getInjectedSource(ZenkyInjection.VariantOptionContext, ZenkyInjection.VariantOptionContextNotFound, injected);
+    case ProductsSourceType.VariantOptionValueContext:
+      return getInjectedSource(ZenkyInjection.VariantOptionValueContext, ZenkyInjection.VariantOptionValueContextNotFound, injected);
     default:
       return null;
   }
