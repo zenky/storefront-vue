@@ -3,7 +3,7 @@ import { ItemLoader, PaginatedLoader, useItemLoader, usePaginatedLoader } from '
 import { getApiErrorMessage, getOffer, getOffers, Offer, OffersPaginationRequest } from '@zenky/api';
 import { useNotification } from '@zenky/ui';
 
-export function useOffersList(errorHandler?: OptionalApiErrorHandler): PaginatedLoader<Offer> {
+export function useOffersList(errorHandler?: OptionalApiErrorHandler): PaginatedLoader<Offer, OffersPaginationRequest> {
   return usePaginatedLoader<Offer, OffersPaginationRequest>(getOffers, getApiErrorHandler(errorHandler, function (e) {
     useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список акций.'));
   }));
