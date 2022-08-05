@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { CollectionsState } from '../types.js';
-import { getProductsCollections } from '@zenky/api';
+import { getProductsCollections, Visibility } from '@zenky/api';
 
 export const useCollectionsStore = defineStore({
   id: 'zenky:storefront:collections',
@@ -21,7 +21,7 @@ export const useCollectionsStore = defineStore({
 
       try {
         this.collections = (await getProductsCollections({
-          visibility: 'visible',
+          visibility: Visibility.Visible,
           order_by: 'name',
           with: 'media',
           count: 100,

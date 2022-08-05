@@ -1,6 +1,6 @@
 {
   "name": "@zenky/storefront-vue",
-  "version": "0.9.36",
+  "version": "0.9.37",
   "description": "Zenky Storefront library for Vue 3.",
   "author": "Timur Zurbaev <hello@zurbaev.ru>",
   "license": "MIT",

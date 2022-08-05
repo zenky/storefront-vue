@@ -12,16 +12,26 @@ import {
 } from '@zenky/api';
 import { useNotification } from '@zenky/ui';
 
-export function useArticlesList(errorHandler?: OptionalApiErrorHandler): PaginatedLoader<Article> {
-  return usePaginatedLoader<Article, ArticlesPaginationRequest>(getArticles, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список статей.'));
-  }));
+export function useArticlesList(
+  errorHandler?: OptionalApiErrorHandler,
+): PaginatedLoader<Article, ArticlesPaginationRequest> {
+  return usePaginatedLoader<Article, ArticlesPaginationRequest>(
+    getArticles,
+    getApiErrorHandler(errorHandler, function (e) {
+      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список статей.'));
+    }),
+  );
 }
 
-export function useArticleCategoriesList(errorHandler?: OptionalApiErrorHandler): PaginatedLoader<ArticleCategory> {
-  return usePaginatedLoader<ArticleCategory, ArticleCategoriesPaginationRequest>(getArticleCategories, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список категорий статей.'));
-  }));
+export function useArticleCategoriesList(
+  errorHandler?: OptionalApiErrorHandler,
+): PaginatedLoader<ArticleCategory, ArticleCategoriesPaginationRequest> {
+  return usePaginatedLoader<ArticleCategory, ArticleCategoriesPaginationRequest>(
+    getArticleCategories,
+    getApiErrorHandler(errorHandler, function (e) {
+      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список категорий статей.'));
+    }),
+  );
 }
 
 export function useArticleItem(errorHandler?: OptionalApiErrorHandler): ItemLoader<Article> {

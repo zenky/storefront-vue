@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { getCategoriesTree } from '@zenky/api';
+import { getCategoriesTree, Visibility } from '@zenky/api';
 import { CategoriesState, FlattenNestedCategory } from '../types.js';
 
 export const useCategoriesStore = defineStore({
@@ -21,7 +21,7 @@ export const useCategoriesStore = defineStore({
       this.loading = true;
 
       try {
-        this.tree = await getCategoriesTree({ visibility: 'visible', with: 'media' });
+        this.tree = await getCategoriesTree({ visibility: Visibility.Visible, with: 'media' });
         this.loaded = true;
       } catch (e) {
         //
