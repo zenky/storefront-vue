@@ -17,6 +17,7 @@ export default [
       '@zenky/api',
       '@zenky/events',
       '@zenky/ui',
+      'date-fns',
       'lodash-es',
       'pinia',
       'pusher-js',
