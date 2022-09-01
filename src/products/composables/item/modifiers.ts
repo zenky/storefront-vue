@@ -88,13 +88,7 @@ export function useModifiers(product: Product, variant: ComputedRef<ProductVaria
   });
 
   watch(selectedModifiers, async () => {
-    const hash = await recalculate(selectedModifiers);
-
-    if (hash === null) {
-      return;
-    }
-
-    modifiersHash.value = hash;
+    modifiersHash.value = await recalculate(selectedModifiers);
   });
 
   return {
