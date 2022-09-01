@@ -5,7 +5,7 @@ import {
   ProductsSorting,
   ProductsSource,
   ProductsSourceType,
-} from '../types.js';
+} from './types.js';
 import { ProductsPaginationRequest } from '@zenky/api';
 
 function getSourceParams(source: ProductsSource | null, promotion: ProductsPromotion | null | undefined): object {

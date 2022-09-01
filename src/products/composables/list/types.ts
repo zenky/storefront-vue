@@ -1,4 +1,4 @@
-import { PaginatedLoaderState } from '../loaders.js';
+import { PaginatedLoaderState } from '../../../loaders.js';
 import {
   Feature,
   FeaturesGroupContainer,

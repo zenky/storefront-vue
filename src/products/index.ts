@@ -1,5 +1,2 @@
-export * from './composables/filters.js';
-export * from './composables/list.js';
-export * from './composables/prices.js';
-export * from './composables/source.js';
-export * from './composables/request-builder.js';
+export * from './composables/item/index.js';
+export * from './composables/list/index.js';

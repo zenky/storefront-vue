@@ -1,6 +1,6 @@
 import { inject, Ref } from 'vue';
-import { InjectedProductsSource, ProductsSource, ProductsSourceType } from '../types.js';
-import { ZenkyInjection } from '../../injections.js';
+import { InjectedProductsSource, ProductsSource, ProductsSourceType } from './types.js';
+import { ZenkyInjection } from '../../../injections.js';
 
 function getInjectedSource(
   sourceInjection: ZenkyInjection,

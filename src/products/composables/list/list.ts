@@ -1,5 +1,5 @@
-import { getApiErrorHandler, OptionalApiErrorHandler } from '../../errors.js';
-import { usePaginatedLoader } from '../../loaders.js';
+import { getApiErrorHandler, OptionalApiErrorHandler } from '../../../errors.js';
+import { usePaginatedLoader } from '../../../loaders.js';
 import { getApiErrorMessage, getProducts, Product, ProductsPaginationRequest } from '@zenky/api';
 import { useNotification } from '@zenky/ui';
 import {
@@ -12,8 +12,8 @@ import {
   ProductsSorting,
   ProductsSource,
   ProductsSourceType,
-} from '../types.js';
-import { useStoreStore } from '../../store/index.js';
+} from './types.js';
+import { useStoreStore } from '../../../store/index.js';
 import { computed, ComputedRef, Ref, ref, watch } from 'vue';
 import { getProductsPaginationRequest } from './request-builder.js';
 import { debounce } from 'lodash-es';

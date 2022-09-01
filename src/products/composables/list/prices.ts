@@ -1,5 +1,5 @@
-import { getApiErrorHandler, OptionalApiErrorHandler } from '../../errors.js';
-import { DataLoader, useDataLoader } from '../../loaders.js';
+import { getApiErrorHandler, OptionalApiErrorHandler } from '../../../errors.js';
+import { DataLoader, useDataLoader } from '../../../loaders.js';
 import { getApiErrorMessage, getProductsPricesRange, ProductsPricesRange } from '@zenky/api';
 import { useNotification } from '@zenky/ui';
 

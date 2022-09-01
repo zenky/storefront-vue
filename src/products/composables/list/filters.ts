@@ -1,6 +1,6 @@
-import { useCategoryFeaturesGroupsList, useCategoryFeaturesList } from '../../catalog/features/index.js';
+import { useCategoryFeaturesGroupsList, useCategoryFeaturesList } from '../../../catalog/features/index.js';
 import { ref, Ref } from 'vue';
-import { ProductsFilters, ProductsPriceFilters } from '../types.js';
+import { ProductsFilters, ProductsPriceFilters } from './types.js';
 import { Feature, FeaturesGroupContainer } from '@zenky/api';
 import { useProductsPricesRange } from './prices.js';
 
