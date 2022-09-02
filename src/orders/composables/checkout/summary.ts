@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { checkoutOrder, getApiError } from '@zenky/api';
 import { useOrderStore } from '../../stores/order.js';
 import { useStoreStore } from '../../../store/index.js';
-import { OrderCheckoutResultReason, OrderCheckoutResultType } from '../../types.js';
+import { OrderCheckoutResult, OrderCheckoutResultReason, OrderCheckoutResultType } from '../../types.js';
 
 export function useCheckoutSummary(emit: (event: string, payload?: any) => any) {
   const orderStore = useOrderStore();
@@ -25,11 +25,17 @@ export function useCheckoutSummary(emit: (event: string, payload?: any) => any) 
   });
 
   const saving = ref(false);
-  const save = async () => {
+  const save = async (): Promise<OrderCheckoutResult> => {
     if (!credentials.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.OrderNotReady,
+      };
     } else if (saving.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     }
 
     const payload: any = {
