@@ -2,8 +2,7 @@ import { storeToRefs } from 'pinia';
 import { useOrderStore } from '../stores/order.js';
 import { computed, ComputedRef, ref, Ref, watch } from 'vue';
 import { OrderProductVariant, ProductVariant } from '@zenky/api';
-import { OrderProductVariantPromotion } from '../types.js';
-import { useNotification } from '@zenky/ui';
+import { OrderProductVariantPromotion, ProductVariantControlsCallbackHandler } from '../types.js';
 import { debounce } from 'lodash-es';
 
 export function useTotalPrice() {
@@ -56,6 +55,7 @@ export const useVariantControls = (
   modifiers: Ref<any[]>,
   modifiersHash: Ref<string | null>,
   promotion: Ref<OrderProductVariantPromotion | null>,
+  callback?: ProductVariantControlsCallbackHandler,
 ) => {
   const { order } = storeToRefs(useOrderStore());
   const { add: addVariant, remove: removeVariant } = useOrderStore();
@@ -87,25 +87,16 @@ export const useVariantControls = (
 
     loading.value = true;
     operation.value = type;
-    let result;
+    let result: boolean;
 
     if (type === 'add') {
       result = await addVariant(variant.value.id, quantity, modifiers.value, promotion.value);
     } else {
       result = await removeVariant(variant.value.id, quantity, modifiers.value, promotion.value);
-      useNotification(
-        'success',
-        'Товар удалён',
-        `Товар${variant.value.name ? ` «${variant.value.name}»` : ''} удалён из корзины!`,
-      );
     }
 
-    if (result) {
-      useNotification(
-        'success',
-        `Товар ${type === 'add' ? 'добавлен' : 'удалён'}`,
-        `Товар${variant.value.name ? ` «${variant.value.name}»` : ''} ${type === 'add' ? 'добавлен в корзину' : 'удалён из корзины'}!`,
-      );
+    if (typeof callback === 'function') {
+      callback(type, result);
     }
 
     loading.value = false;

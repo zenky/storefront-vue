@@ -3,12 +3,10 @@ import { ListLoader, useListLoader } from '../../../loaders.js';
 import {
   Feature,
   FeaturesGroupContainer,
-  getApiErrorMessage,
   getCategoryFeatures,
   getCategoryFeaturesGroups,
   ResourceRequest,
 } from '@zenky/api';
-import { useNotification } from '@zenky/ui';
 
 export function useCategoryFeaturesList(categoryId: string | null, errorHandler?: OptionalApiErrorHandler): ListLoader<Feature> {
   return useListLoader<Feature, ResourceRequest>(
@@ -20,9 +18,7 @@ export function useCategoryFeaturesList(categoryId: string | null, errorHandler?
       return getCategoryFeatures(categoryId);
     },
 
-    getApiErrorHandler(errorHandler, function (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список фильтров.'));
-    }),
+    getApiErrorHandler(errorHandler, 'useCategoryFeaturesList', 'Unable to load category features list.'),
   );
 }
 
@@ -39,8 +35,6 @@ export function useCategoryFeaturesGroupsList(
       return getCategoryFeaturesGroups(categoryId);
     },
 
-    getApiErrorHandler(errorHandler, function (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список фильтров.'));
-    }),
+    getApiErrorHandler(errorHandler, 'useCategoryFeaturesGroupsList', 'Unable to load category features groups list.'),
   );
 }

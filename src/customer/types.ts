@@ -1,4 +1,4 @@
-import { AuthenticationPhone, Customer } from '@zenky/api';
+import { AuthenticationPhone, Customer, ZenkyError } from '@zenky/api';
 import { ComputedRef, Ref } from 'vue';
 import { AddressForm } from '../addresses/index.js';
 
@@ -15,11 +15,19 @@ export enum AuthenticationEvent {
 }
 
 export enum AuthenticationResultType {
-  Pending = 'pending',
   Validation = 'validation',
   Failed = 'failed',
   Completed = 'completed',
   Stage = 'stage',
+}
+
+export enum AuthenticationFailureReason {
+  ApiError = 'api_error',
+  InProgress = 'in_progress',
+  Cooldown = 'cooldown',
+  PhoneRequired = 'phone_required',
+  PasswordRequired = 'password_required',
+  CodeRequired = 'code_required',
 }
 
 export type EmitAuthenticationEvent = (e: AuthenticationEvent, payload?: any) => void;
@@ -47,6 +55,8 @@ export interface AuthenticationFormProvider {
 export interface AuthenticationResult {
   type: AuthenticationResultType;
   data?: any;
+  reason?: AuthenticationFailureReason;
+  error?: ZenkyError | null;
 }
 
 export interface AuthenticationStatusCheckerProvider {
@@ -86,8 +96,26 @@ export interface ConfirmationProvider {
   confirm: (withPassword: boolean) => Promise<AuthenticationResult>;
 }
 
+export enum AddressResultType {
+  Failed = 'failed',
+  Completed = 'completed',
+}
+
+export enum AddressResultReason {
+  InProgress = 'in_progress',
+  Validation = 'validation',
+  ApiError = 'api_error',
+}
+
+export interface AddressResult {
+  type: AddressResultType;
+  reason?: AddressResultReason;
+  data?: any;
+  error?: ZenkyError | null;
+}
+
 export interface EditAddressFormProvider {
   form: Ref<AddressForm>;
   saving: Ref<boolean>;
-  save: () => Promise<boolean>;
+  save: () => Promise<AddressResult>;
 }

@@ -1,10 +1,11 @@
-import { useNotification } from '@zenky/ui';
-import { confirm as confirmRegistration, getApiErrorCode, getApiErrorMessage, resendConfirmationCode } from '@zenky/api';
+import { confirm as confirmRegistration, getApiError, getApiErrorCode, resendConfirmationCode } from '@zenky/api';
 import {
   AuthenticationEvent,
+  AuthenticationFailureReason,
   AuthenticationForm,
   AuthenticationResult,
-  AuthenticationResultType, ConfirmationProvider,
+  AuthenticationResultType,
+  ConfirmationProvider,
   EmitAuthenticationEvent,
 } from '../../types.js';
 import { ref, Ref } from 'vue';
@@ -17,20 +18,18 @@ function useResend(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
   const resend = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (seconds.value > 0) {
-      useNotification('error', 'Ошибка', 'Нужно подождать перед повторной отправкой кода подтверждения.');
-
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.Cooldown,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     }
 
@@ -45,14 +44,15 @@ function useResend(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
         type: AuthenticationResultType.Completed,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Нужно подождать перед повторной отправкой кода подтверждения.'));
+
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {
@@ -67,28 +67,23 @@ function useConfirm(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: E
   const confirm = async (withPassword: boolean = false): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     } else if (!form.value.confirmation_code) {
-      useNotification('error', 'Ошибка', 'Нужно указать код из SMS.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'confirmation_code',
+        reason: AuthenticationFailureReason.CodeRequired,
       };
     } else if (withPassword && !form.value.password) {
-      useNotification('error', 'Ошибка', 'Нужно указать новый пароль.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'password',
+        reason: AuthenticationFailureReason.PasswordRequired,
       };
     }
 
@@ -104,8 +99,6 @@ function useConfirm(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: E
       const store = useCustomerStore();
       await store.setToken(result.token);
 
-      useNotification('success', 'Успешное подтверждение телефона', 'Вы успешно подтвердили телефон и вошли в свой аккаунт.');
-
       emit(AuthenticationEvent.Completed);
 
       return {
@@ -113,21 +106,21 @@ function useConfirm(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: E
         data: result.customer,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Указан неправильный код подтверждения.'));
-
       if (getApiErrorCode(e) === 'auth.registration.password_required') {
         return {
           type: AuthenticationResultType.Validation,
-          data: 'password',
+          reason: AuthenticationFailureReason.PasswordRequired,
         };
       }
+
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {

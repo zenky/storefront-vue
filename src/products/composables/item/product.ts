@@ -1,12 +1,10 @@
 import {
-  getApiErrorMessage,
   getProduct,
   Product,
   ProductRequest,
 } from '@zenky/api';
 import { getApiErrorHandler, OptionalApiErrorHandler } from '../../../errors.js';
 import { ItemLoader, useItemLoader } from '../../../loaders.js';
-import { useNotification } from '@zenky/ui';
 import { useVariant } from './variants.js';
 import { useModifiers } from './modifiers.js';
 import { useVariantPrice } from './prices.js';
@@ -14,9 +12,10 @@ import { Ref, ref } from 'vue';
 import { ProductCardProduct } from './types.js';
 
 export function useProductItem(errorHandler?: OptionalApiErrorHandler): ItemLoader<Product, string, ProductRequest> {
-  return useItemLoader<Product, string, ProductRequest>(getProduct, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Товар не найден.'));
-  }));
+  return useItemLoader<Product, string, ProductRequest>(
+    getProduct,
+    getApiErrorHandler(errorHandler, 'useProductItem', 'Unable to load product.'),
+  );
 }
 
 export function useProductCard(item: Product) {

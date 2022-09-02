@@ -1,13 +1,14 @@
 import { ref, Ref } from 'vue';
 import {
   AuthenticationEvent,
+  AuthenticationFailureReason,
   AuthenticationForm,
   AuthenticationResult,
   AuthenticationResultType,
-  EmitAuthenticationEvent, LoginProvider,
+  EmitAuthenticationEvent,
+  LoginProvider,
 } from '../../types.js';
-import { useNotification } from '@zenky/ui';
-import { getApiErrorMessage, login as signIn } from '@zenky/api';
+import { getApiError, login as signIn } from '@zenky/api';
 import { useCustomerStore } from '../../stores/customer.js';
 
 export function useLogin(
@@ -18,21 +19,18 @@ export function useLogin(
   const login = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     } else if (!form.value.password) {
-      useNotification('error', 'Ошибка', 'Нужно указать пароль.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'password',
+        reason: AuthenticationFailureReason.PasswordRequired,
       };
     }
 
@@ -47,7 +45,6 @@ export function useLogin(
       const { setToken } = useCustomerStore();
       const customer = await setToken(token);
 
-      useNotification('success', 'Успешный вход', 'Вы успешно вошли в ваш аккаунт!');
       emit(AuthenticationEvent.Completed);
 
       return {
@@ -55,14 +52,14 @@ export function useLogin(
         data: customer,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Указан неправильный пароль.'));
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {

@@ -1,6 +1,6 @@
 import { computed, Ref, ref } from 'vue';
-import { useNotification } from '@zenky/ui';
-import { confirmOrder, getApiErrorMessage, Order, resendOrderConfirmationCode } from '@zenky/api';
+import { confirmOrder, getApiError, Order, resendOrderConfirmationCode } from '@zenky/api';
+import { OrderCheckoutResult, OrderCheckoutResultReason, OrderCheckoutResultType } from '../../types.js';
 
 export function useCheckoutConfirmation(order: Ref<Order>) {
   const form = ref({ code: '' });
@@ -11,31 +11,45 @@ export function useCheckoutConfirmation(order: Ref<Order>) {
     token: order.value.token,
   }));
 
-  const confirm = async () => {
+  const confirm = async (): Promise<OrderCheckoutResult> => {
     if (confirming.value) {
-      return null;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     } else if (!form.value.code) {
-      useNotification('error', 'Ошибка', 'Нужно указать код из SMS.');
-
-      return null;
+      return {
+        type: OrderCheckoutResultType.Validation,
+        reason: OrderCheckoutResultReason.CodeRequired,
+      };
     }
 
     confirming.value = true;
 
     try {
-      return await confirmOrder(credentials.value, form.value);
+      const response = await confirmOrder(credentials.value, form.value);
+
+      return {
+        type: OrderCheckoutResultType.Completed,
+        data: response,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось подтвердить заказ.'));
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       confirming.value = false;
     }
-
-    return null;
   };
 
-  const resendCode = async () => {
+  const resendCode = async (): Promise<OrderCheckoutResult> => {
     if (resending.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     }
 
     resending.value = true;
@@ -44,12 +58,21 @@ export function useCheckoutConfirmation(order: Ref<Order>) {
       const result = await resendOrderConfirmationCode(credentials.value);
 
       if (result.success) {
-        useNotification('success', 'Код выслан', 'Код был повторно выслан на ваш телефон.');
-      } else {
-        useNotification('error', 'Ошибка', 'Не удалось выслать код подтверждения. Повторите попытку позднее.');
+        return {
+          type: OrderCheckoutResultType.Completed,
+        };
       }
+
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.Cooldown,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось выслать код подтверждения.'));
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       resending.value = false;
     }

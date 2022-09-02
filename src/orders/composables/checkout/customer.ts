@@ -1,9 +1,9 @@
 import { ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useNotification } from '@zenky/ui';
-import { getApiErrorMessage, setOrderCheckoutCustomer } from '@zenky/api';
+import { getApiError, setOrderCheckoutCustomer } from '@zenky/api';
 import { useCustomerStore } from '../../../customer/index.js';
 import { useOrderStore } from '../../stores/order.js';
+import { OrderCheckoutResult, OrderCheckoutResultReason, OrderCheckoutResultType } from '../../types.js';
 
 export function useCustomerCheckoutForm(emit: (event: string) => any) {
   const ready = ref(false);
@@ -32,19 +32,27 @@ export function useCustomerCheckoutForm(emit: (event: string) => any) {
     form.value.last_name = customer.value.last_name || '';
   }
 
-  const save = async () => {
+  const save = async (): Promise<OrderCheckoutResult> => {
     if (!credentials.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.OrderNotReady,
+      };
     } else if (saving.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
-      return;
+      return {
+        type: OrderCheckoutResultType.Validation,
+        reason: OrderCheckoutResultReason.PhoneRequired,
+      };
     } else if (!form.value.first_name) {
-      useNotification('error', 'Ошибка', 'Нужно указать имя.');
-
-      return;
+      return {
+        type: OrderCheckoutResultType.Validation,
+        reason: OrderCheckoutResultReason.FirstNameRequired,
+      };
     }
 
     saving.value = true;
@@ -53,8 +61,16 @@ export function useCustomerCheckoutForm(emit: (event: string) => any) {
       await setOrderCheckoutCustomer(credentials.value, form.value);
 
       emit('completed');
+
+      return {
+        type: OrderCheckoutResultType.Completed,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось сохранить контактные данные.'));
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       saving.value = false;
     }

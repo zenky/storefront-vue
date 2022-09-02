@@ -19,6 +19,7 @@ export function useCollections(): ProductsCollectionsProvider {
   const collections = ref<ProductsCollection[]>([]);
   const load = async (ids: string[] | null = null): Promise<void> => {
     collections.value = [];
+
     const items = await getCollections();
 
     if (ids === null) {

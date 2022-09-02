@@ -16,7 +16,6 @@ export default [
     external: [
       '@zenky/api',
       '@zenky/events',
-      '@zenky/ui',
       'date-fns',
       'lodash-es',
       'pinia',

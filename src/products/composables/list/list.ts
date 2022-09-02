@@ -1,7 +1,6 @@
 import { getApiErrorHandler, OptionalApiErrorHandler } from '../../../errors.js';
 import { usePaginatedLoader } from '../../../loaders.js';
-import { getApiErrorMessage, getProducts, Product, ProductsPaginationRequest } from '@zenky/api';
-import { useNotification } from '@zenky/ui';
+import { getProducts, Product, ProductsPaginationRequest } from '@zenky/api';
 import {
   ProductsFilters,
   ProductsFiltersType,
@@ -30,9 +29,10 @@ function getCategoryIdFromSource(source?: ProductsSource | null) {
 }
 
 export function useProductsList(config: ComputedRef<ProductsListConfig>, errorHandler?: OptionalApiErrorHandler): ProductsListProvider {
-  const productsLoader = usePaginatedLoader<Product, ProductsPaginationRequest>(getProducts, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить товары.'));
-  }));
+  const productsLoader = usePaginatedLoader<Product, ProductsPaginationRequest>(
+    getProducts,
+    getApiErrorHandler(errorHandler, 'useProductsList', 'Unable to load products list.'),
+  );
 
   const store = useStoreStore();
   const cityId = computed(() => store.cityId);

@@ -1,22 +1,23 @@
 import { getApiErrorHandler, OptionalApiErrorHandler } from '../../errors.js';
 import { PaginatedLoader, usePaginatedLoader } from '../../loaders.js';
-import { Address, deleteAddress, getApiErrorMessage, getCustomerAddresses, updateAddress } from '@zenky/api';
-import { useNotification } from '@zenky/ui';
+import { Address, deleteAddress, getApiError, getCustomerAddresses, updateAddress } from '@zenky/api';
 import { DataDestroyer, useDataDestroyer } from '../../destroyers.js';
-import { EditAddressFormProvider } from '../types.js';
+import { AddressResult, AddressResultReason, AddressResultType, EditAddressFormProvider } from '../types.js';
 import { AddressForm, getExistedAddressDisplayValue, useAddressFormValue } from '../../addresses/index.js';
 import { ref } from 'vue';
 
 export function useDeliveryAddressesList(errorHandler?: OptionalApiErrorHandler): PaginatedLoader<Address> {
-  return usePaginatedLoader<Address>(getCustomerAddresses, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить адреса доставки.'));
-  }));
+  return usePaginatedLoader<Address>(
+    getCustomerAddresses,
+    getApiErrorHandler(errorHandler, 'useDeliveryAddressesList', 'Unable to load delivery addresses list.'),
+  );
 }
 
 export function useDeliveryAddressDestroyer(errorHandler?: OptionalApiErrorHandler): DataDestroyer {
-  return useDataDestroyer(deleteAddress, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось удалить адрес доставки.'));
-  }));
+  return useDataDestroyer(
+    deleteAddress,
+    getApiErrorHandler(errorHandler, 'useDeliveryAddressDestroyer', 'Unable to delete delivery address.'),
+  );
 }
 
 export function useEditAddressForm(address: Address): EditAddressFormProvider {
@@ -46,17 +47,22 @@ export function useEditAddressForm(address: Address): EditAddressFormProvider {
   const saving = ref<boolean>(false);
   const form = ref<AddressForm>(addressFields);
 
-  const save = async (): Promise<boolean> => {
+  const save = async (): Promise<AddressResult> => {
     if (saving.value) {
-      return false;
+      return {
+        type: AddressResultType.Failed,
+        reason: AddressResultReason.InProgress,
+      };
     }
 
     const { errors, data } = useAddressFormValue(form.value, address.resolver, address);
 
     if (errors.length > 0) {
-      useNotification('error', 'Ошибка', errors[0]);
-
-      return false;
+      return {
+        type: AddressResultType.Failed,
+        reason: AddressResultReason.Validation,
+        data: errors,
+      };
     }
 
     saving.value = true;
@@ -69,16 +75,18 @@ export function useEditAddressForm(address: Address): EditAddressFormProvider {
         },
       });
 
-      useNotification('success', 'Адрес сохранён', 'Адрес был успешно сохранён!');
-
-      return true;
+      return {
+        type: AddressResultType.Completed,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось сохранить адрес. Повторите попытку.'));
+      return {
+        type: AddressResultType.Failed,
+        reason: AddressResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       saving.value = false;
     }
-
-    return false;
   };
 
   return {

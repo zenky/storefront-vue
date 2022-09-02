@@ -1,13 +1,14 @@
 import { ref, Ref } from 'vue';
-import { useNotification } from '@zenky/ui';
-import { getApiErrorMessage, register as registerAccount } from '@zenky/api';
+import { getApiError, register as registerAccount } from '@zenky/api';
 import {
   AuthenticationEvent,
+  AuthenticationFailureReason,
   AuthenticationForm,
   AuthenticationResult,
   AuthenticationResultType,
   AuthenticationStage,
-  EmitAuthenticationEvent, RegistrationProvider,
+  EmitAuthenticationEvent,
+  RegistrationProvider,
 } from '../../types.js';
 
 export function useRegistration(
@@ -18,21 +19,18 @@ export function useRegistration(
   const register = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     } else if (!form.value.password) {
-      useNotification('error', 'Ошибка', 'Нужно придумать пароль.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'password',
+        reason: AuthenticationFailureReason.PasswordRequired,
       };
     }
 
@@ -43,8 +41,6 @@ export function useRegistration(
 
       if (!result.confirmation_required) {
         emit(AuthenticationEvent.Completed);
-
-        useNotification('success', 'Успешная регистрация', 'Вы успешно зарегистрировались!');
 
         return {
           type: AuthenticationResultType.Completed,
@@ -58,14 +54,14 @@ export function useRegistration(
         data: AuthenticationStage.Confirmation,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Этот телефон уже зарегистрирован.'));
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {

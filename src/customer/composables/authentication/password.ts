@@ -1,6 +1,7 @@
 import { ref, Ref } from 'vue';
 import {
   AuthenticationEvent,
+  AuthenticationFailureReason,
   AuthenticationForm,
   AuthenticationResult,
   AuthenticationResultType,
@@ -8,8 +9,7 @@ import {
   PasswordResetProvider,
 } from '../../types.js';
 import { useTimer } from '../../../helpers/timer.js';
-import { useNotification } from '@zenky/ui';
-import { getApiErrorMessage, requestPasswordResetCode, resetPassword } from '@zenky/api';
+import { getApiError, requestPasswordResetCode, resetPassword } from '@zenky/api';
 import { useCustomerStore } from '../../stores/customer.js';
 
 function useRequest(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
@@ -19,20 +19,18 @@ function useRequest(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
   const request = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (seconds.value > 0) {
-      useNotification('error', 'Ошибка', 'Нужно подождать перед повторной отправкой кода сброса пароля.');
-
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.Cooldown,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     }
 
@@ -41,7 +39,6 @@ function useRequest(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
     try {
       await requestPasswordResetCode(form.value.phone);
 
-      useNotification('success', 'Код отправлен', 'Код сброса пароля был отправлен на ваш номер.');
       sent.value = true;
       start();
 
@@ -49,14 +46,14 @@ function useRequest(form: Ref<AuthenticationForm>, active: Ref<boolean>) {
         type: AuthenticationResultType.Completed,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Нужно подождать перед повторной отправкой кода сброса пароля.'));
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {
@@ -71,28 +68,23 @@ function useReset(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: Emi
   const reset = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     } else if (!form.value.password) {
-      useNotification('error', 'Ошибка', 'Нужно придумать новый пароль.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'password',
+        reason: AuthenticationFailureReason.PasswordRequired,
       };
     } else if (!form.value.confirmation_code) {
-      useNotification('error', 'Ошибка', 'Нужно указать код из SMS.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'confirmation_code',
+        reason: AuthenticationFailureReason.CodeRequired,
       };
     }
 
@@ -104,8 +96,6 @@ function useReset(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: Emi
       const store = useCustomerStore();
       await store.setToken(result.token);
 
-      useNotification('success', 'Пароль изменён', 'Вы успешно изменили пароль и вошли в свой аккаунт.');
-
       emit(AuthenticationEvent.Completed);
 
       return {
@@ -113,14 +103,14 @@ function useReset(form: Ref<AuthenticationForm>, active: Ref<boolean>, emit: Emi
         data: result.customer,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Указан неправильный код сброса пароля.'));
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {

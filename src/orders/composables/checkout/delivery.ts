@@ -2,21 +2,20 @@ import { storeToRefs } from 'pinia';
 import { computed, Ref, ref } from 'vue';
 import {
   Address,
-  Customer,
-  getApiErrorMessage,
+  Customer, getApiError,
   getCustomerAddresses,
   Order,
   OrderSettings,
   setOrderCheckoutDelivery,
   Stock,
 } from '@zenky/api';
-import { useNotification } from '@zenky/ui';
 import { format } from 'date-fns';
-import { getAddressForm, useAddressFormValue } from '../../../addresses/index.js';
+import { AddressFormValueError, getAddressForm, useAddressFormValue } from '../../../addresses/index.js';
 import { useOrderStore } from '../../stores/order.js';
 import { useCustomerStore } from '../../../customer/index.js';
 import { useStoreStore } from '../../../store/index.js';
 import { useTotalPrice } from '../order.js';
+import { OrderCheckoutResult, OrderCheckoutResultReason, OrderCheckoutResultType } from '../../types.js';
 
 function getDeliveryMethod(order: Ref<Order | null>, settings: Ref<OrderSettings | null>) {
   if (!order.value || !settings.value) {
@@ -69,19 +68,19 @@ function getDeliveryPayload(form: any, addressesResolver: string) {
     if (form.pickup.stock_id) {
       data.stock_id = form.pickup.stock_id;
     } else {
-      errors.push('Нужно выбрать точку самовывоза.');
+      errors.push(AddressFormValueError.StockRequired);
     }
   } else if (form.method === 'on_premise') {
     if (form.on_premise.stock_id) {
       data.stock_id = form.on_premise.stock_id;
     } else {
-      errors.push('Нужно выбрать точку самовывоза.');
+      errors.push(AddressFormValueError.StockRequired);
     }
 
     if (form.on_premise.table) {
       data.on_premise = { table: form.on_premise.table };
     } else {
-      errors.push('Нужно указать номер стола.');
+      errors.push(AddressFormValueError.TableRequired);
     }
   } else if (form.method === 'delivery') {
     if (form.delivery.address.id) {
@@ -155,19 +154,27 @@ export function useDeliveryCheckoutForm(emit: (event: string) => any) {
     return method.min_price.value > (totalPrice.value?.value || 0);
   });
 
-  const save = async () => {
+  const save = async (): Promise<OrderCheckoutResult> => {
     if (!credentials.value || !addressesResolver.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.OrderNotReady,
+      };
     } else if (saving.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     }
 
     const { data, errors } = getDeliveryPayload(form.value, addressesResolver.value);
 
     if (errors.length > 0) {
-      useNotification('error', 'Ошибка', errors[0]);
-
-      return;
+      return {
+        type: OrderCheckoutResultType.Validation,
+        reason: OrderCheckoutResultReason.AddressError,
+        data: errors,
+      };
     }
 
     saving.value = true;
@@ -176,8 +183,16 @@ export function useDeliveryCheckoutForm(emit: (event: string) => any) {
       await setOrderCheckoutDelivery(credentials.value, data);
 
       emit('completed');
+
+      return {
+        type: OrderCheckoutResultType.Completed,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось сохранить способ доставки.'));
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       saving.value = false;
     }

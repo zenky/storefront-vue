@@ -1,5 +1,6 @@
 import { ref, Ref } from 'vue';
 import { ApiErrorHandler } from './errors.js';
+import { getApiError, getApiErrorMessage } from '@zenky/api';
 
 export interface DataDestroyer {
   destroying: Ref<boolean>;
@@ -26,7 +27,11 @@ export function useDataDestroyer(destroyer: DataDestroyerHandler, errorHandler: 
 
       return true;
     } catch (e) {
-      errorHandler(e);
+      errorHandler({
+        e,
+        error: getApiError(e),
+        message: getApiErrorMessage(e),
+      });
     } finally {
       destroying.value = false;
     }

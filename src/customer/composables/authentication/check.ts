@@ -1,6 +1,7 @@
 import { ref, Ref } from 'vue';
 import {
   AuthenticationEvent,
+  AuthenticationFailureReason,
   AuthenticationForm,
   AuthenticationResult,
   AuthenticationResultType,
@@ -8,8 +9,7 @@ import {
   AuthenticationStatusCheckerProvider,
   EmitAuthenticationEvent,
 } from '../../types.js';
-import { useNotification } from '@zenky/ui';
-import { getApiErrorMessage, getAuthenticationStatus } from '@zenky/api';
+import { getApiError, getAuthenticationStatus } from '@zenky/api';
 
 export function useAuthenticationStatusChecker(
   form: Ref<AuthenticationForm>,
@@ -19,14 +19,13 @@ export function useAuthenticationStatusChecker(
   const check = async (): Promise<AuthenticationResult> => {
     if (active.value) {
       return {
-        type: AuthenticationResultType.Pending,
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.InProgress,
       };
     } else if (!form.value.phone.number || !form.value.phone.country) {
-      useNotification('error', 'Ошибка', 'Нужно указать номер телефона.');
-
       return {
         type: AuthenticationResultType.Validation,
-        data: 'phone',
+        reason: AuthenticationFailureReason.PhoneRequired,
       };
     }
 
@@ -39,14 +38,14 @@ export function useAuthenticationStatusChecker(
         emit(AuthenticationEvent.Stage, AuthenticationStage.Register);
 
         return {
-          type: AuthenticationResultType.Completed,
+          type: AuthenticationResultType.Stage,
           data: AuthenticationStage.Register,
         };
       } else if (!status.confirmed) {
         emit(AuthenticationEvent.Stage, AuthenticationStage.Confirmation);
 
         return {
-          type: AuthenticationResultType.Completed,
+          type: AuthenticationResultType.Stage,
           data: AuthenticationStage.Confirmation,
         };
       }
@@ -54,18 +53,19 @@ export function useAuthenticationStatusChecker(
       emit(AuthenticationEvent.Stage, AuthenticationStage.Login);
 
       return {
-        type: AuthenticationResultType.Completed,
+        type: AuthenticationResultType.Stage,
         data: AuthenticationStage.Login,
       };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось проверить статус регистрации. Повторите попытку.'));
+
+      return {
+        type: AuthenticationResultType.Failed,
+        reason: AuthenticationFailureReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       active.value = false;
     }
-
-    return {
-      type: AuthenticationResultType.Failed,
-    };
   };
 
   return {

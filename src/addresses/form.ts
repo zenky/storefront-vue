@@ -42,9 +42,19 @@ export interface AddressFormValue {
   floor: string;
   has_intercom: boolean;
 }
+
 export interface AddressFormValueProvider {
   errors: string[];
   data: AddressFormValue;
+}
+
+export enum AddressFormValueError {
+  DaDataSuggestionRequired = 'dadata.suggestion_required',
+  CityRequired = 'plain.city_required',
+  StreetRequired = 'plain.street_required',
+  HouseRequired = 'plain.house_required',
+  StockRequired = 'stock_required',
+  TableRequired = 'table_required',
 }
 
 export function useAddressFormValue(
@@ -77,15 +87,15 @@ export function useAddressFormValue(
           : form.has_intercom === 'true',
       } as AddressFormValue;
     } else {
-      errors.push('Нужно выбрать улицу из выпадающего списка.');
+      errors.push(AddressFormValueError.DaDataSuggestionRequired);
     }
   } else if (resolver === 'plain') {
     if (!form.city) {
-      errors.push('Нужно указать город.');
+      errors.push(AddressFormValueError.CityRequired);
     } else if (!form.street) {
-      errors.push('Нужно указать улицу.');
+      errors.push(AddressFormValueError.StreetRequired);
     } else if (!form.house) {
-      errors.push('Нужно указать номер дома.');
+      errors.push(AddressFormValueError.HouseRequired);
     } else {
       data = {
         city: form.city,

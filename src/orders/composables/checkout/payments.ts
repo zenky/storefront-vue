@@ -1,14 +1,22 @@
 import { computed, Ref, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import {
-  getApiErrorMessage,
-  getOrderBonusesPaymentPreview, Order, OrderCredentials, OrderSettings,
+  getApiError,
+  getOrderBonusesPaymentPreview,
+  Order,
+  OrderCredentials,
+  OrderSettings,
   setOrderCheckoutPayment,
 } from '@zenky/api';
 import { debounce } from 'lodash-es';
-import { useNotification } from '@zenky/ui';
-import { useTotalPrice } from '../order.js';
 import { useOrderStore } from '../../stores/order.js';
+import {
+  BillSuggestion,
+  BillSuggestionType,
+  OrderCheckoutResult,
+  OrderCheckoutResultReason,
+  OrderCheckoutResultType,
+} from '../../types.js';
 
 function getPaymentMethod(settings: Ref<OrderSettings | null>) {
   if (!settings.value) {
@@ -25,7 +33,6 @@ export function useBillSuggestions(
   staticAmounts: number[] = [10, 50, 200, 5000],
   availableBills: number[] = [100, 500, 1000],
 ) {
-  const { totalPrice } = useTotalPrice();
   const getClosestMultipleOf = (price: number, amount: number) => Math.ceil(price / amount) * amount;
   const suggestions = computed(() => {
     const items = new Set([
@@ -34,21 +41,21 @@ export function useBillSuggestions(
       unpaidAmount.value,
     ]);
 
-    const bills: { label: string; value: string | number }[] = [...items]
+    const bills: BillSuggestion[] = [...items]
       .filter((suggestion) => suggestion > unpaidAmount.value)
       .sort((first, second) => (first - second))
       .map((amount) => ({
         value: amount,
-        label: `${totalPrice.value?.currency.prefix}${amount}${totalPrice.value?.currency.suffix}`,
+        type: BillSuggestionType.Bill,
       }));
 
     bills.unshift({
-      label: 'Без сдачи',
+      type: BillSuggestionType.NoChange,
       value: '',
     });
 
     bills.push({
-      label: 'Другая',
+      type: BillSuggestionType.Custom,
       value: 'custom',
     });
 
@@ -88,8 +95,6 @@ function useBonusesPreviewChecker(
 
       if (parseFloat(bonuses.value) > parseFloat(preview.bonuses.trimmed)) {
         setBonuses(preview.bonuses.trimmed);
-
-        useNotification('warning', 'Сумма бонусов изменена', 'Вы указали сумму бонусов, превышающую лимит списания. Мы изменили сумму на максимально доступную.');
       }
     } catch (e) {
       //
@@ -152,11 +157,17 @@ export function useDeliveryPaymentsForm(emit: (event: string) => any) {
     },
   );
 
-  const save = async () => {
+  const save = async (): Promise<OrderCheckoutResult> => {
     if (!credentials.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.OrderNotReady,
+      };
     } else if (saving.value) {
-      return;
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.InProgress,
+      };
     }
 
     const payments = getPaymentsPayload(form.value);
@@ -164,8 +175,16 @@ export function useDeliveryPaymentsForm(emit: (event: string) => any) {
     try {
       await setOrderCheckoutPayment(credentials.value, { payments });
       emit('completed');
+
+      return {
+        type: OrderCheckoutResultType.Completed,
+      };
     } catch (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось сохранить способ оплаты.'));
+      return {
+        type: OrderCheckoutResultType.Failed,
+        reason: OrderCheckoutResultReason.ApiError,
+        error: getApiError(e),
+      };
     } finally {
       saving.value = false;
     }

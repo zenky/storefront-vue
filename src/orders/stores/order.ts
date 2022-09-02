@@ -1,14 +1,14 @@
 import { defineStore } from 'pinia';
-import { useNotification } from '@zenky/ui';
 import {
+  useOrderInitializationFailed,
   useOrderLoaded,
-  useProductQuantityDecreased,
-  useProductQuantityIncreased,
+  useProductQuantityDecreased, useProductQuantityDecreaseFailed,
+  useProductQuantityIncreased, useProductQuantityIncreaseFailed,
 } from '@zenky/events';
 import {
   addOrderProductVariant,
   createOrder,
-  getApiErrorMessage,
+  getApiError,
   getOrderSettings,
   Order,
   OrderCredentials,
@@ -123,7 +123,9 @@ export const useOrderStore = defineStore({
 
         return await this.load(storeId, cityId, order.id, order.token as string);
       } catch (e) {
-        useNotification('error', 'Ошибка инициализации заказа', 'Не удалось инициализировать заказ. Обновите страницу.');
+        useOrderInitializationFailed().publish({
+          error: getApiError(e),
+        });
       }
 
       return false;
@@ -175,11 +177,14 @@ export const useOrderStore = defineStore({
 
         return true;
       } catch (e) {
-        useNotification(
-          'error',
-          'Товар не добавлен',
-          getApiErrorMessage(e, 'Не удалось добавить товар в корзину. Повторите попытку'),
-        );
+        useProductQuantityIncreaseFailed().publish({
+          error: getApiError(e),
+          order: this.order,
+          productVariantId,
+          quantity,
+          modifiers,
+          promotion,
+        });
       }
 
       return false;
@@ -225,11 +230,14 @@ export const useOrderStore = defineStore({
 
         return true;
       } catch (e) {
-        useNotification(
-          'error',
-          'Товар не удалён',
-          getApiErrorMessage(e, 'Не удалось удалить товар из корзины. Повторите попытку'),
-        );
+        useProductQuantityDecreaseFailed().publish({
+          error: getApiError(e),
+          order: this.order,
+          productVariantId,
+          quantity,
+          modifiers,
+          promotion,
+        });
       }
 
       return false;

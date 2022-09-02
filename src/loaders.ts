@@ -1,5 +1,12 @@
 import { computed, ComputedRef, Ref, ref, watch } from 'vue';
-import { PaginatedResponse, Pagination, PaginationRequest, ResourceRequest } from '@zenky/api';
+import {
+  getApiError,
+  getApiErrorMessage,
+  PaginatedResponse,
+  Pagination,
+  PaginationRequest,
+  ResourceRequest,
+} from '@zenky/api';
 import { ApiErrorHandler } from './errors.js';
 
 export interface LoaderState {
@@ -94,7 +101,11 @@ export function usePaginatedLoader<T, R = PaginationRequest>(
         currentItems.forEach((item: T) => items.value.push(item));
       }
     } catch (e) {
-      errorHandler(e);
+      errorHandler({
+        e,
+        error: getApiError(e),
+        message: getApiErrorMessage(e),
+      });
     } finally {
       state.value.loading = false;
       state.value.waiting = false;
@@ -137,7 +148,11 @@ export function useListLoader<T, R = ResourceRequest>(
     try {
       items.value = await provider(request);
     } catch (e) {
-      errorHandler(e);
+      errorHandler({
+        e,
+        error: getApiError(e),
+        message: getApiErrorMessage(e),
+      });
     } finally {
       state.value.loading = false;
       state.value.loaded = true;
@@ -178,7 +193,11 @@ export function useItemLoader<T, I = string, R = ResourceRequest>(
     try {
       item.value = await provider(id, request);
     } catch (e) {
-      errorHandler(e);
+      errorHandler({
+        e,
+        error: getApiError(e),
+        message: getApiErrorMessage(e),
+      });
     } finally {
       state.value.loading = false;
       state.value.loaded = true;
@@ -219,7 +238,11 @@ export function useDataLoader<T>(
     try {
       data.value = await provider();
     } catch (e) {
-      errorHandler(e);
+      errorHandler({
+        e,
+        error: getApiError(e),
+        message: getApiErrorMessage(e),
+      });
     } finally {
       state.value.loading = false;
       state.value.loaded = true;

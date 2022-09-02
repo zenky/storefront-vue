@@ -3,6 +3,7 @@ import { computed, ComputedRef, Ref, ref, watch } from 'vue';
 import { getCityPart, getDaDataEntityName, getHousePart } from './helpers.js';
 import { debounce } from 'lodash-es';
 import { useStoreStore } from '../../store/index.js';
+import { storeToRefs } from 'pinia';
 
 export interface DadataProvider {
   query: Ref<string | null>;
@@ -11,13 +12,13 @@ export interface DadataProvider {
 }
 
 export function useDadata(): DadataProvider {
-  const { cityId } = useStoreStore();
+  const { cityId } = storeToRefs(useStoreStore());
   const query = ref<string | null>(null);
   const loading = ref<boolean>(false);
   const results = ref<any[]>([]);
 
   watch(query, debounce(async () => {
-    if (loading.value || !query.value || !cityId) {
+    if (loading.value || !query.value || !cityId.value) {
       return;
     }
 
@@ -26,7 +27,7 @@ export function useDadata(): DadataProvider {
 
       const { suggestions } = await getAddressSuggestions({
         query: query.value,
-        city_id: cityId,
+        city_id: cityId.value,
       });
 
       results.value = suggestions;

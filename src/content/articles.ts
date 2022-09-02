@@ -5,21 +5,17 @@ import {
   ArticleCategoriesPaginationRequest,
   ArticleCategory,
   ArticlesPaginationRequest,
-  getApiErrorMessage,
   getArticle,
   getArticleCategories,
   getArticles,
 } from '@zenky/api';
-import { useNotification } from '@zenky/ui';
 
 export function useArticlesList(
   errorHandler?: OptionalApiErrorHandler,
 ): PaginatedLoader<Article, ArticlesPaginationRequest> {
   return usePaginatedLoader<Article, ArticlesPaginationRequest>(
     getArticles,
-    getApiErrorHandler(errorHandler, function (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список статей.'));
-    }),
+    getApiErrorHandler(errorHandler, 'useArticlesList', 'Unable to load articles list.'),
   );
 }
 
@@ -28,14 +24,10 @@ export function useArticleCategoriesList(
 ): PaginatedLoader<ArticleCategory, ArticleCategoriesPaginationRequest> {
   return usePaginatedLoader<ArticleCategory, ArticleCategoriesPaginationRequest>(
     getArticleCategories,
-    getApiErrorHandler(errorHandler, function (e) {
-      useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить список категорий статей.'));
-    }),
+    getApiErrorHandler(errorHandler, 'useArticleCategoriesList', 'Unable to load article categories list.'),
   );
 }
 
 export function useArticleItem(errorHandler?: OptionalApiErrorHandler): ItemLoader<Article> {
-  return useItemLoader<Article>(getArticle, getApiErrorHandler(errorHandler, function (e) {
-    useNotification('error', 'Ошибка', getApiErrorMessage(e, 'Не удалось загрузить статью.'));
-  }));
+  return useItemLoader<Article>(getArticle, getApiErrorHandler(errorHandler, 'useArticleItem', 'Unable to load article.'));
 }
