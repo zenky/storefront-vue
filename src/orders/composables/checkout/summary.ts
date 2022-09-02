@@ -51,8 +51,11 @@ export function useCheckoutSummary(emit: (event: string, payload?: any) => any) 
     try {
       const response = await checkoutOrder(credentials.value, payload);
 
-      if (response.confirmation_required) {
-        emit('confirmation', credentials.value);
+      if (response.confirmation.required) {
+        emit('confirmation', {
+          credentials: credentials.value,
+          method: response.confirmation.method,
+        });
       } else {
         emit('completed', response);
       }
