@@ -6,7 +6,7 @@ export interface StoreState {
   loading: boolean;
   loaded: boolean;
   store: Store | null;
-  storeId: string;
+  storeId: string | null;
   cityId: string | null;
 }
 
@@ -19,7 +19,7 @@ export const useStoreStore = defineStore({
       loading: false,
       loaded: false,
       store: null,
-      storeId: (window as any).zenky.storeId,
+      storeId: null,
       cityId: storage.get('cityId'),
     };
   },
@@ -75,10 +75,12 @@ export const useStoreStore = defineStore({
   },
 
   actions: {
-    async loadStore(inclusions: string): Promise<void> {
+    async loadStore(storeId: string, inclusions: string): Promise<void> {
       if (this.loading || this.loaded) {
         return;
       }
+
+      this.storeId = storeId;
 
       try {
         this.store = await getStore(inclusions);
