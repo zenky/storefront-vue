@@ -8,10 +8,6 @@ export default [
         format: 'esm',
         dir: 'dist/esm',
       },
-      {
-        format: 'cjs',
-        dir: 'dist/cjs',
-      },
     ],
     external: [
       '@zenky/api',
