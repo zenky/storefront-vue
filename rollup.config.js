@@ -6,7 +6,11 @@ export default [
     output: [
       {
         format: 'esm',
-        dir: 'dist/esm',
+        file: 'dist/esm/index.mjs',
+      },
+      {
+        format: 'cjs',
+        file: 'dist/cjs/index.cjs',
       },
     ],
     external: [

@@ -1,10 +1,18 @@
 {
   "name": "@zenky/storefront-vue",
-  "version": "0.9.46",
+  "version": "0.9.47",
   "description": "Zenky Storefront library for Vue 3.",
   "author": "Timur Zurbaev <hello@zurbaev.ru>",
   "license": "MIT",
-  "main": "dist/esm/index.js",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.cjs",
+      "import": "./dist/esm/index.mjs"
+    }
+  },
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.mjs",
+  "types": "./dist/zenky.d.ts",
   "files": [
     "dist/*"
   ],
@@ -13,12 +21,11 @@
     "lint": "eslint \"./src/**/*.ts\"",
     "fix": "eslint --fix \"./src/**/*.ts\""
   },
-  "types": "./dist/zenky.d.ts",
   "keywords": [
     "Zenky"
   ],
   "peerDependencies": {
-    "@zenky/api": "^0.9.52",
+    "@zenky/api": "^0.9.55",
     "@zenky/events": "^1.0.3",
     "date-fns": "^2.29.2",
     "lodash-es": "^4.17.21",
